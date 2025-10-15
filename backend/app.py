@@ -41,8 +41,10 @@ async def ask_rag(body: AskRequest):
 
     try:
         # process_query is sync -> run it in a thread
+        print("Query recieved")
         result = await asyncio.to_thread(pipeline.process_query, q)
-        return result  # FastAPI will validate/shape it to AskResponse
+        print(result)
+        return result.answer  # FastAPI will validate/shape it to AskResponse
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"RAG error: {e}")
  
