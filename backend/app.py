@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import asyncio
 from rag import pipeline
 from pydantic import BaseModel,Field
-
+from routes import auth
 load_dotenv()
 
 
@@ -24,6 +24,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
+
 
 class AskRequest(BaseModel):
     query: str = Field(..., min_length=1, description="User query text")
