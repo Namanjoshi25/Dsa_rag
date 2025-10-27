@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import{ motion} from 'framer-motion'
 import { Card, CardContent } from "@/components/ui/card";
+import axios from "axios";
 
 // keep your existing BrandWord, AuthShell, and AuthCard as-is
 const BrandWord = ({ children }: { children: React.ReactNode }) => (
@@ -26,17 +27,6 @@ return (
 <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_60%_at_50%_-10%,rgba(255,255,255,0.08),rgba(10,10,11,0)),radial-gradient(40%_30%_at_120%_10%,rgba(244,114,182,0.08),rgba(10,10,11,0))]" />
 
 
-<header className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6">
-<div className="flex items-center gap-3">
-<div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-rose-500 to-fuchsia-600 shadow-[0_0_40px_-10px_rgba(244,63,94,0.6)]">
-<Sparkles className="h-5 w-5" />
-</div>
-<span className="text-lg font-semibold tracking-tight">
-<BrandWord>agentic</BrandWord>
-</span>
-</div>
-<div className="text-sm text-zinc-400">Innovative AI solution 2025 • Trusted by teams</div>
-</header>
 
 
 <main className="relative z-10 mx-auto flex max-w-xl items-center justify-center px-6 pb-24 pt-6">
@@ -89,44 +79,47 @@ export default function SignupPage() {
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState<string | null>(null);
 
-  async function handleSignin(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setError(null);
-    setSuccess(null);
+async function handleSignin(e: React.FormEvent<HTMLFormElement>) {
+  e.preventDefault();
+  setError(null);
+  setSuccess(null);
 
-    // basic client-side validation
-  
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-      return setError("Please enter a valid email.");
-    if (password.length < 8)
-      return setError("Password must be at least 8 characters.");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+    return setError("Please enter a valid email.");
+  if (password.length < 8)
+    return setError("Password must be at least 8 characters.");
 
+  try {
+    setLoading(true);
 
-    try {
-      setLoading(true);
-
-      // POST to your API route
-      const res = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
-      });
-
-      if (!res.ok) {
-        // expects { message: string } on error
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data?.message || "Could not create account.");
+    const res = await axios.post(
+      'http://localhost:8000/api/v1/auth/signin',
+      { email, password },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        withCredentials: true, // CRITICAL!
       }
+    );
 
-      setSuccess("Account created! Redirecting…");
-      router.push("/dashboard"); // change to where you want to land after signup
-    } catch (err: any) {
-      setError(err?.message ?? "Something went wrong.");
-    } finally {
-      setLoading(false);
-    }
+    if (!res.data) throw Error("Failed to Login");
+
+    console.log("✅ Login successful");
+    setSuccess("Login successful! Redirecting…");
+    
+    // Small delay for user feedback
+    setTimeout(() => {
+      router.push("/dashboard");
+    }, 500);
+    
+  } catch (err: any) {
+    console.error("❌ Login error:", err);
+    setError(err.response?.data?.detail || "Login failed");
+  } finally {
+    setLoading(false);
   }
-
+}
   return (
     <AuthShell>
       <AuthCard

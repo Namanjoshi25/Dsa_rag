@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import{ motion} from 'framer-motion'
 import { Card, CardContent } from "@/components/ui/card";
-
+import axios from "axios";
 // keep your existing BrandWord, AuthShell, and AuthCard as-is
 const BrandWord = ({ children }: { children: React.ReactNode }) => (
 <span className="bg-gradient-to-r from-pink-400 via-rose-400 to-fuchsia-400 bg-clip-text text-transparent">
@@ -26,17 +26,6 @@ return (
 <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_60%_at_50%_-10%,rgba(255,255,255,0.08),rgba(10,10,11,0)),radial-gradient(40%_30%_at_120%_10%,rgba(244,114,182,0.08),rgba(10,10,11,0))]" />
 
 
-<header className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6">
-<div className="flex items-center gap-3">
-<div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-rose-500 to-fuchsia-600 shadow-[0_0_40px_-10px_rgba(244,63,94,0.6)]">
-<Sparkles className="h-5 w-5" />
-</div>
-<span className="text-lg font-semibold tracking-tight">
-<BrandWord>agentic</BrandWord>
-</span>
-</div>
-<div className="text-sm text-zinc-400">Innovative AI solution 2025 • Trusted by teams</div>
-</header>
 
 
 <main className="relative z-10 mx-auto flex max-w-xl items-center justify-center px-6 pb-24 pt-6">
@@ -105,30 +94,49 @@ export default function SignupPage() {
     if (!agree)
       return setError("Please accept the Terms and Privacy Policy.");
 
-    try {
-      setLoading(true);
-
-      // POST to your API route
-      const res = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
-      });
-
-      if (!res.ok) {
-        // expects { message: string } on error
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data?.message || "Could not create account.");
+    // POST to your API route using Axios
+  try {
+    const res = await axios.post(
+      'http://localhost:8000/api/v1/auth/signup',
+      { full_name: name, email, password }, 
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
       }
+    );
 
-      setSuccess("Account created! Redirecting…");
-      router.push("/dashboard"); // change to where you want to land after signup
-    } catch (err: any) {
-      setError(err?.message ?? "Something went wrong.");
-    } finally {
-      setLoading(false);
+    
+
+    setSuccess('Account created! Redirecting…');
+    router.push('/signin');
+  } catch (error : any) {
+
+    let errorMessage = 'Could not create account.';
+
+    if (error.response) {
+    
+      const data = error.response.data; 
+      errorMessage = data?.message || errorMessage;
+    } else if (error.request) {
+      
+      errorMessage = 'No response received from server.';
+    } else {
+      errorMessage = error.message || errorMessage;
     }
+
+
+    console.error(errorMessage);
+    
+    
+  
+    throw new Error(errorMessage); 
+
+  } finally {
+    setLoading(false); 
   }
+}
+  
 
   return (
     <AuthShell>

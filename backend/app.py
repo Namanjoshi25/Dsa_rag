@@ -19,8 +19,8 @@ app = FastAPI(title=APP_NAME, docs_url="/docs", redoc_url="/redoc", openapi_url=
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
-    allow_credentials=True,
+    allow_origins=["http://localhost:3000"],  # Your frontend URL
+    allow_credentials=True,  # THIS IS CRITICAL
     allow_methods=["*"],
     allow_headers=["*"],
 )

@@ -1,5 +1,5 @@
 import os
-from fastapi import APIRouter,Depends,HTTPException,status
+from fastapi import APIRouter,Depends,HTTPException,status,Response
 from sqlalchemy.orm import Session
 from datetime import datetime,timedelta
 from dotenv import load_dotenv
@@ -10,7 +10,7 @@ from schemas.token import Token
 from core.deps import get_current_user
 
 from core.security import (
-    verify_passoword,
+    verify_password,
     get_password_hash,
     create_access_token
 )
@@ -45,35 +45,46 @@ async def signup(user_data:UserCreate,db:Session = Depends(get_db)):
     return new_user
 
 
-@router.post("/login",response_model=Token)
-async def login(credentials:UserLogin,db:Session = Depends(get_db)):
+@router.post("/signin", response_model=Token)
+async def login(
+    credentials: UserLogin,
+    response: Response,                     
+    db: Session = Depends(get_db),
+):
+   
     user = db.query(User).filter(User.email == credentials.email).first()
-    
-    if not user:
+
+   
+    if not user or not verify_password(credentials.password, user.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect user or password"
+            detail="Incorrect user or password",
         )
+
     
-    if not verify_passoword(credentials.password,user.password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect user or password"
-        ) 
+    access_token_expires = timedelta(minutes=1440)
+
     
-    access_token_expires = timedelta(1440)
     access_token = create_access_token(
-        data = {"sub":str(user.id)},
-        expires_delta=access_token_expires
-    )    
-    return {"access_token": access_token, "token_type": "Bearer"}
+        data={"sub": str(user.id)},
+        expires_delta=access_token_expires,
+    )
+
     
+    response.set_cookie(
+    "session", access_token,
+    httponly=True,
+    samesite="lax",   
+    secure=False,     
+    path="/",
+    max_age=86400,
+)
+
+    return {"access_token": access_token, "token_type": "Bearer"}
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Get current user information
-    """
+    
     return current_user    
