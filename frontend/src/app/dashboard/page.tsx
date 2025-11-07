@@ -16,7 +16,7 @@ export default function Dashboard() {
   }
 
   if (!user) {
-    return null; // Will redirect via useAuth
+    return null; 
   }
 
   return (

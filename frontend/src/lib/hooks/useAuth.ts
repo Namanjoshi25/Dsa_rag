@@ -1,4 +1,4 @@
-// hooks/useAuth.ts
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -17,7 +17,7 @@ export function useAuth(redirectTo: string = "/signin") {
       if (!userData) {
         console.log("❌ Auth failed - redirecting");
         router.push(redirectTo);
-      } else {
+      } else { 
         console.log("✅ Auth successful:", userData.email);
         setUser(userData);
       }

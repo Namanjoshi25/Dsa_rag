@@ -13,6 +13,7 @@ export async function GET(req: Request) {
     status: upstream.status,
     headers: {
       "content-type": upstream.headers.get("content-type") || "application/json",
+       "cache-control": "no-store",
     },
   });
 }
