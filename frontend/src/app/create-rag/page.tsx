@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { useForm, Controller } from 'react-hook-form'
-import { z } from 'zod'
+import { file, minLength, z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -51,6 +51,11 @@ const RagSchema = z
       .int()
       .min(0, "Cannot be negative"),
     is_active: z.boolean(),
+   documents: z
+  .array(z.instanceof(File))
+  .min(1, "File is required")
+  .max(3, "Max 3 files can be uploaded")
+
   })
   .superRefine((data, ctx) => {
     if (data.chunk_overlap >= data.chunk_size) {
@@ -93,25 +98,49 @@ export default function RagForm() {
       top_k: 5,
       document_count: 0,
       is_active: true,
+      documents: []
     },
   })
 
   const onSubmit = async (values: RagFormValues) => {
     try {
-      setSubmitError(null);
-      setSubmitSuccess(false);
-      
-      console.log("Submitting RAG config:", values);
-      
+         setSubmitError(null);
+    setSubmitSuccess(false);
+    
+    // Create FormData instead of sending JSON
+    const formData = new FormData();
+    
+    // Append all form fields
+    formData.append('name', values.name);
+    if (values.description) {
+      formData.append('description', values.description);
+    }
+    formData.append('qdrant_collection', values.qdrant_collection);
+    formData.append('embedding_model', values.embedding_model);
+    formData.append('llm_model', values.llm_model);
+    formData.append('chunk_size', values.chunk_size.toString());
+    formData.append('chunk_overlap', values.chunk_overlap.toString());
+    formData.append('top_k', values.top_k.toString());
+    formData.append('document_count', values.document_count.toString());
+    formData.append('is_active', values.is_active.toString());
+    
+    // Append files
+    values.documents.forEach((file) => {
+      formData.append('documents', file);
+    });
+    
+    console.log("Submitting RAG with files...");
+    
+    // Send FormData (axios automatically sets Content-Type: multipart/form-data)
+    const res = await api.post(`/api/v1/user/create/${user?.id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    
+    console.log("Response:", res.data);
+    setSubmitSuccess(true);
 
-      const res = await api.post(`/api/v1/user/create/${user?.id}`, values);
-      
-      console.log("Response:", res.data);
-      setSubmitSuccess(true);
-      
-      // Optional: reset form after successful submission
-      // reset();
-      
     } catch (error: any) {
       console.error("Submission error:", error);
       setSubmitError(error.response?.data?.message || error.message || "Failed to create RAG config");
@@ -269,6 +298,36 @@ export default function RagForm() {
               <p className="text-sm text-red-600">{errors.document_count.message}</p>
             )}
           </div>
+          </div>
+        {/* Documents to upload */}
+     
+     
+<div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+  <div className="space-y-2">
+    <Label htmlFor="documents">Documents</Label>
+    <Controller
+      name="documents"
+      control={control}
+      render={({ field: { onChange, onBlur, name, ref } }) => (
+        <Input
+          id="documents"
+          type="file"
+          multiple
+          accept=".pdf,.txt,.docx,.md"
+          ref={ref}
+          name={name}
+          onBlur={onBlur}
+          onChange={(e) => {
+            const files = e.target.files;
+            onChange(files ? Array.from(files) : []);
+          }}
+        />
+      )}
+    />
+    {errors.documents && (
+      <p className="text-sm text-red-600">{errors.documents.message}</p>
+    )}
+  </div>
 
           {/* Fixed Switch integration with Controller */}
           <div className="flex items-center justify-between rounded-2xl border p-4">
