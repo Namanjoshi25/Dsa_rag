@@ -8,6 +8,7 @@ class StatusEnum(str, Enum):
         PENDING = "pending"
         FAILED = "failed"
         SUCCESS = "success"
+        PROCESSING ='processing'
 
 class RAGInstance(Base):
     __tablename__= "rag_instances"

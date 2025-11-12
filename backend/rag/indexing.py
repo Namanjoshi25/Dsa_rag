@@ -7,6 +7,10 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient
 from dotenv import load_dotenv
+from uuid import UUID
+from sqlalchemy.orm import Session
+from models.raginstance_model import RAGInstance
+import os 
 
 
 CHUNK_SIZE = 1500
@@ -33,11 +37,11 @@ def load_and_index_pdf(pdf_path: Path) -> QdrantVectorStore:
     """Load PDF, chunk it, and index into Qdrant"""
     
     # Validate PDF exists
-    if not pdf_path.exists():
+    if not  os.path.isfile(pdf_path):
         raise FileNotFoundError(f"PDF not found: {pdf_path}")
     
     # Load PDF
-    logger.info(f"Loading PDF: {pdf_path.name}")
+    logger.info(f"Loading PDF: {pdf_path}")
     try:
         loader = PyPDFLoader(file_path=str(pdf_path))
         docs = loader.load()
@@ -80,12 +84,33 @@ def load_and_index_pdf(pdf_path: Path) -> QdrantVectorStore:
     logger.info(f"✓ Successfully indexed {len(chunks)} chunks to Qdrant")
     return vector_store
 
-if __name__ == "__main__":
+
+def rag_indexing(rag_id : UUID , db : Session):
     # Validate connection
-    validate_qdrant_connection(QDRANT_URL)
+    try:
+     logger.info("Checking the qdrant connection")
+     validate_qdrant_connection(QDRANT_URL)
     
+     logger.info("Checking if the rag exists")
+     rag= db.query(RAGInstance).filter(RAGInstance.id == rag_id).first()
+    
+     if not rag:
+         raise ValueError("rag not found")
+    
+    # Todo do a alembic push to change and add a processing status in the rag databse
+    #rag.status = "processing"
+     #db.commit()
+     #db.refresh(rag) 
+     
     # Index PDF
-    pdf_path = Path(__file__).parent / "data/Comprehensive_Data_Structures.pdf"
-    vector_store = load_and_index_pdf(pdf_path)
+     folder_path = f"uploads/{rag_id}"
+     logger.info("File indexing is started")
+     for doc in os.listdir(folder_path):
+         pdf_path = os.path.join(folder_path,doc)
+         vector_store = load_and_index_pdf(pdf_path)
     
-    logger.info("Indexing complete!")
+     logger.info("Indexing complete!")
+     
+    except Exception as e:
+        logger.info(f"Error occured while indexing the documnet {e}")
+        

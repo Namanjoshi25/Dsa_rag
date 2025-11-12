@@ -8,10 +8,11 @@ from core.deps import get_current_user
 from uuid import UUID
 from typing import Optional,List
 import os
+from rag.indexing import rag_indexing
 router= APIRouter()
 
 # Rag Creation
-@router.post("/create/{id}",status_code=status.HTTP_201_CREATED)
+@router.post("/create/{id}", status_code=status.HTTP_201_CREATED)
 async def create_rag(
      id: UUID = Path(..., title="User ID", description="The ID of the user creating the RAG"),
     name: str = Form(...),
@@ -83,10 +84,12 @@ async def create_rag(
             f.write(content)
         saved_files.append(file_path)
         
+        #After this create a document model for each file witha db call so taht we have the meta data fof each document 
+        
     
-    # TODO: Add to background job queue for processing
-    # process_rag_documents.delay(new_rag.id, saved_files)
     
+    
+    rag_indexing(new_rag.id , db)
     return {
         "id": new_rag.id,
         "name": new_rag.name,
