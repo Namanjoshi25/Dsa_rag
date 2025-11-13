@@ -4,6 +4,7 @@ from db.supabase import get_db
 from sqlalchemy.orm import Session
 from models.user_model import User
 from models.raginstance_model import RAGInstance
+from models.document_model import Document
 from core.deps import get_current_user
 from uuid import UUID
 from typing import Optional,List
@@ -84,7 +85,23 @@ async def create_rag(
             f.write(content)
         saved_files.append(file_path)
         
-        #After this create a document model for each file witha db call so taht we have the meta data fof each document 
+        
+        new_document = Document(
+            rag_id=new_rag.id,
+            user_id= id,
+            filename=doc.filename,
+            file_path=file_path,
+            file_type=os.path.splitext(doc.filename)[1].lower(),
+            file_size=len(content),
+            status="pending"
+)
+        db.add(new_document)
+        db.commit()
+        db.refresh(new_document)
+        
+        
+        
+       
         
     
     

@@ -108,6 +108,8 @@ def rag_indexing(rag_id : UUID , db : Session):
      for doc in os.listdir(folder_path):
          pdf_path = os.path.join(folder_path,doc)
          vector_store = load_and_index_pdf(pdf_path)
+         
+         # Todo log the vector store when it is working an dstor ethe point_ids to the document database and there add teh processed_at time and total chunks also.
     
      logger.info("Indexing complete!")
      
