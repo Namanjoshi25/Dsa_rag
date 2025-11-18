@@ -83,7 +83,7 @@ async def create_rag(
         with open(file_path, "wb") as f:
             content = await doc.read()
             f.write(content)
-        saved_files.append(file_path)
+        
         
         
         new_document = Document(
@@ -98,15 +98,14 @@ async def create_rag(
         db.add(new_document)
         db.commit()
         db.refresh(new_document)
-        
-        
+        saved_files.append(new_document.id)
         
        
         
     
     
     
-    rag_indexing(new_rag.id , db)
+    rag_indexing(new_rag.id , db,qdrant_collection,document_ids = saved_files)
     return {
         "id": new_rag.id,
         "name": new_rag.name,

@@ -12,6 +12,8 @@ import { Label } from '@radix-ui/react-label'
 import api from '@/lib/axios'
 import { useAuth } from '@/lib/hooks/useAuth'
 
+import { useRouter } from 'next/navigation'
+
 // Fixed schema - removed files requirement since it's commented out
 const RagSchema = z
   .object({
@@ -73,6 +75,8 @@ export default function RagForm() {
   type User = {
     id: string;
   };
+
+  const router  = useRouter()
 
   const { user, loading } = useAuth() as { user: User | null; loading: boolean };
   const [submitError, setSubmitError] = React.useState<string | null>(null);
@@ -140,7 +144,7 @@ export default function RagForm() {
     
     console.log("Response:", res.data);
     setSubmitSuccess(true);
-
+    router.push("/dashboard")
     } catch (error: any) {
       console.error("Submission error:", error);
       setSubmitError(error.response?.data?.message || error.message || "Failed to create RAG config");
