@@ -6,6 +6,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
 from langchain_qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient
+from qdrant_client.models import Filter, FieldCondition, MatchValue
 from dotenv import load_dotenv
 from uuid import UUID
 from sqlalchemy.orm import Session
@@ -35,7 +36,7 @@ def validate_qdrant_connection(url: str) -> None:
     except Exception as e:
         raise ConnectionError(f"Cannot connect to Qdrant at {url}: {e}")
 
-def load_and_index_pdf(pdf_path: Path,qdrant_collection:str) -> QdrantVectorStore:
+def load_and_index_pdf(pdf_path: Path,qdrant_collection:str,document_id:UUID) -> QdrantVectorStore:
     """Load PDF, chunk it, and index into Qdrant"""
     COLLECTION_NAME =qdrant_collection
     # Validate PDF exists
@@ -70,7 +71,8 @@ def load_and_index_pdf(pdf_path: Path,qdrant_collection:str) -> QdrantVectorStor
         chunk.metadata.update({
             "source": pdf_name,
             "chunk_id": i,
-            "total_chunks": len(chunks)
+            "total_chunks": len(chunks),
+            "document_id" : str(document_id)
         })
     
     logger.info(f"✓ Created {len(chunks)} chunks")
@@ -92,47 +94,76 @@ def load_and_index_pdf(pdf_path: Path,qdrant_collection:str) -> QdrantVectorStor
     return vector_store
 
 
-def upload_ids_to_qdrant(document_id : UUID,collection_name:str, db:Session):
+
+
+
+def upload_ids_to_qdrant(document_id: UUID, collection_name: str, db: Session):
     try:
-        logger.info("Checking qdrant connection")
+        logger.info(f"Retrieving point IDs for document: {document_id}")
         qdrant_client = QdrantClient(url="http://localhost:6333")
+        point_ids = []
+        offset = None
         
-        point_ids=[]
-        offset=None
+       
+        scroll_filter = Filter(
+            must=[
+                FieldCondition(
+                    key="metadata.document_id",  
+                    match=MatchValue(value=str(document_id))
+                )
+            ]
+        )
         
         while True:
             result, next_offset = qdrant_client.scroll(
-            collection_name=collection_name,
-            scroll_filter={
-                "must": [
-                    {
-                        "key": "document_id",
-                        "match": {"value": str(document_id)}
-                    }
-                ]
-            },
-            limit=100,
-            offset=offset,
-            with_payload=False,
-            with_vectors=False
-        )
-            point_ids.extend([point.id for point in result])    
+                collection_name=collection_name,
+                scroll_filter=scroll_filter,
+                limit=100,
+                offset=offset,
+                with_payload=True,
+                with_vectors=False
+            )
+            
+            logger.info(f"Found {len(result)} points in this batch")
+            
+            if result and len(point_ids) == 0:  #
+                logger.info(f"Sample point payload: {result[0].payload}")
+            
+            point_ids.extend([point.id for point in result])
             
             if next_offset is None:
                 break
             offset = next_offset
         
+        logger.info(f"Total points found for document {document_id}: {len(point_ids)}")
+        
+        if not point_ids:
+            logger.warning(f"No points found for document_id: {document_id}")
+            collection_info = qdrant_client.get_collection(collection_name)
+            logger.info(f"Total points in collection '{collection_name}': {collection_info.points_count}")
+            
+           
+        
+        # Update document
         document = db.query(Document).filter(Document.id == document_id).first()
-        if document :
-            document.qdrant_point_ids = point_ids 
+        if document:
+            document.qdrant_point_ids = point_ids
             document.total_chunks = len(point_ids)
             document.processed_at = datetime.utcnow()
+            document.status = "completed"  # Update status
             db.commit()
-        return point_ids     
+            logger.info(f"Updated document {document_id} with {len(point_ids)} point IDs")
+        else:
+            logger.error(f"Document {document_id} not found in database!")
+        
+        return point_ids
+        
     except Exception as e:
-        logger.info(f"Error while storing the point_ids {e}")       
+        logger.error(f"Error while retrieving point_ids: {e}", exc_info=True)
+        db.rollback()
+        return []
              
-def rag_indexing(rag_id : UUID , db : Session,qdrant_collection:str,document_ids : List[str]):
+def rag_indexing(rag_id : UUID , db : Session,qdrant_collection:str,id:UUID):
     # Validate connection
     try:
      logger.info("Checking the qdrant connection")
@@ -152,15 +183,32 @@ def rag_indexing(rag_id : UUID , db : Session,qdrant_collection:str,document_ids
     # Index PDF
      folder_path = f"uploads/{rag_id}"
      logger.info("File indexing is started")
+     document_ids = []
      for doc in os.listdir(folder_path):
          pdf_path = os.path.join(folder_path,doc)
-         vector_store = load_and_index_pdf(pdf_path,qdrant_collection)
+         
+         size = os.path.getsize(pdf_path)
+         #Saved the document in the document model and get the id of that document for indexing meta data
+         new_document = Document(
+            rag_id=rag_id,
+            user_id= id,
+            filename=  os.path.splitext(pdf_path.split("\\")[-1])[0],
+            file_path=pdf_path,
+            file_type=pdf_path.split("\\")[1].split("."),
+            file_size=size,
+            status="pending"
+)
+         db.add(new_document)
+         db.commit()
+         db.refresh(new_document)
+         document_ids.append(new_document.id)
+         vector_store = load_and_index_pdf(pdf_path,qdrant_collection,document_id=new_document.id)
       
      logger.info("Indexing complete!")
      
      logger.info("Uploading the point_ids to the document model") 
      for document_id in document_ids:
-         ids=  upload_ids_to_qdrant(document_id,qdrant_collection,db)    
+         ids=    upload_ids_to_qdrant(collection_name=qdrant_collection,document_id=document_id,db=db)
          
      logger.info(f"Uploading of the point_ids completed ! {ids}")      
     

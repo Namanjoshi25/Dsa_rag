@@ -86,26 +86,14 @@ async def create_rag(
         
         
         
-        new_document = Document(
-            rag_id=new_rag.id,
-            user_id= id,
-            filename=doc.filename,
-            file_path=file_path,
-            file_type=os.path.splitext(doc.filename)[1].lower(),
-            file_size=len(content),
-            status="pending"
-)
-        db.add(new_document)
-        db.commit()
-        db.refresh(new_document)
-        saved_files.append(new_document.id)
+      
         
        
         
     
     
     
-    rag_indexing(new_rag.id , db,qdrant_collection,document_ids = saved_files)
+    rag_indexing(new_rag.id , db,qdrant_collection,id)
     return {
         "id": new_rag.id,
         "name": new_rag.name,
@@ -113,3 +101,24 @@ async def create_rag(
         "message": "RAG created successfully. Processing documents..."
     }
         
+
+@router.get("/get-user-rags/{id}",status_code=status.HTTP_200_OK) 
+async def get_user_rags(
+    id:UUID = Path(...,title="User id" ,description="User id"),
+    db:Session = Depends(get_db),
+    user: User = Depends(get_current_user)
+    ):
+    try:
+        user = db.query(User).filter(User.id == id).first()
+    
+        if not user:
+            raise HTTPException(404,detail="User not found")
+        
+        rags = db.query(RAGInstance).filter(RAGInstance.user_id == user.id).all()
+        
+        return rags
+        
+    except Exception as e:
+      print(f"Error occured while fetching the rags {e}")
+      return
+ 
