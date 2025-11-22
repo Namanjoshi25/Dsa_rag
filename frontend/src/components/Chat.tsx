@@ -18,7 +18,7 @@ export default function Chat({ragData} : {ragData : RagProps}) {
     controllerRef.current = ctrl;
 
     try {
-      const res = await fetch(`${API_BASE}/ask`, {
+      const res = await fetch(`${API_BASE}/api/v1/rag/ask`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: q ,collection_name : ragData.qdrant_collection , embedding : ragData.embedding_model }),
