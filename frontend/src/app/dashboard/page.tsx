@@ -12,7 +12,7 @@ type User = {
   email: string;
   full_name: string;
 };
-type RagProps = {
+export  type RagProps = {
   
     id: string;
     name: string;
@@ -66,10 +66,7 @@ export default function Dashboard() {
          <RagCard
          key={i}
   rag={rag} 
-  onClick={(id) => {
-    
-    router.push(`/chat/${id}`);
-  }}
+
 />
        ))}
 

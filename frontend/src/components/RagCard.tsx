@@ -1,4 +1,6 @@
+
 import React from "react";
+import Link from 'next/link'
 
 type RagCardProps = {
   rag: {
@@ -14,12 +16,12 @@ type RagCardProps = {
     top_k: number;
     qdrant_collection: string;
   };
-  onClick: (id: string) => void;
+
 };
 
 const gradBorder = "bg-gradient-to-r from-pink-500/30 via-rose-500/30 to-fuchsia-500/30";
 
-export default function RagCard({ rag, onClick }: RagCardProps) {
+export default function RagCard({ rag }: RagCardProps) {
   return (
     <div className="relative group">
       {/* Gradient Border on Hover */}
@@ -61,13 +63,13 @@ export default function RagCard({ rag, onClick }: RagCardProps) {
         {/* Footer */}
         <div className="flex justify-between items-center text-xs text-zinc-500">
           <span>{rag.embedding_model}</span>
-          <button
-            onClick={() => onClick(rag.id)}
+           <Link href={`/chat/${rag.id}`}
+          
             className="px-4 py-2 rounded-xl text-black bg-white hover:bg-zinc-200
               active:scale-[0.97] transition font-medium"
           >
             Open Chat
-          </button>
+          </Link>
         </div>
       </div>
     </div>

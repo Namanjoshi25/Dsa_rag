@@ -2,8 +2,9 @@
 import { useRef, useState } from "react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE!;
+import { RagProps } from "@/app/dashboard/page";
 
-export default function Chat() {
+export default function Chat({ragData} : {ragData : RagProps}) {
   const [q, setQ] = useState("");
   const [ans, setAns] = useState("");
   const [loading, setLoading] = useState(false);
@@ -20,7 +21,7 @@ export default function Chat() {
       const res = await fetch(`${API_BASE}/ask`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: q }),
+        body: JSON.stringify({ query: q ,collection_name : ragData.qdrant_collection , embedding : ragData.embedding_model }),
         signal: ctrl.signal,
       });
 

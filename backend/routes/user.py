@@ -114,7 +114,7 @@ async def get_user_rags(
         if not user:
             raise HTTPException(404,detail="User not found")
         
-        rags = db.query(RAGInstance).filter(RAGInstance.user_id == user.id).all()
+        rags = db.query(RAGInstance).filter(RAGInstance.user_id == id).all()
         
         return rags
         
@@ -122,3 +122,17 @@ async def get_user_rags(
       print(f"Error occured while fetching the rags {e}")
       return
  
+
+@router.get("/get-rag-info/{id}",status_code=status.HTTP_200_OK)
+async def get_rag_info(
+    id:UUID=Path(...,title="User id" ,description="User id"),
+    db:Session = Depends(get_db),
+    user:User = Depends(get_current_user)
+): 
+    try:
+        rag= db.query(RAGInstance).filter(RAGInstance.id == id).first()
+        
+        return rag
+    except Exception as e:
+        print(f'An exception occurred {e}')
+        return

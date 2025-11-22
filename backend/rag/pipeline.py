@@ -11,23 +11,13 @@ load_dotenv()
 # ---- Config
 QDRANT_URL         = os.getenv("QDRANT_URL", "http://localhost:6333")
 QDRANT_API_KEY     = os.getenv("QDRANT_API_KEY")  # optional
-QDRANT_COLLECTION  = os.getenv("QDRANT_COLLECTION", "data_structure_vector_store")
-EMBEDDING_MODEL    = os.getenv("EMBEDDING_MODEL", "text-embedding-3-large")  # must match your index
+
 CHAT_MODEL         = os.getenv("CHAT_MODEL", "gpt-4o-mini")
 TOP_K              = int(os.getenv("TOP_K", "4"))
 MAX_CONTEXT_CHARS  = int(os.getenv("MAX_CONTEXT_CHARS", "8000"))  # simple budget
 
 # ---- Clients
 openai_client = OpenAI()
-emb = OpenAIEmbeddings(model=EMBEDDING_MODEL)
-
-vs = QdrantVectorStore.from_existing_collection(
-    collection_name=QDRANT_COLLECTION,
-    embedding=emb,
-    url=QDRANT_URL,
-    api_key=QDRANT_API_KEY,
-)
-
 def _build_context(results) -> tuple[str, List[Dict]]:
     """Build a readable context block and collect citations metadata."""
     parts, citations = [], []
@@ -57,7 +47,17 @@ def _chat_with_retry(messages, max_retries=3, timeout=60):
             if attempt == max_retries:
                 raise
             time.sleep(min(2 ** attempt, 10))  # exponential backoff
-def process_query(query: str) -> Dict:
+def process_query(query: str,collection_name:str,embedding:str) -> Dict:
+    
+    emb = OpenAIEmbeddings(model=embedding)
+
+    vs = QdrantVectorStore.from_existing_collection(
+      collection_name=collection_name,
+      embedding=emb,
+       url=QDRANT_URL,
+       api_key=QDRANT_API_KEY,
+)
+
     results = vs.similarity_search(query=query, k=TOP_K)
 
     if not results:
@@ -73,19 +73,7 @@ def process_query(query: str) -> Dict:
     context, citations = _build_context(results)  # your existing helper (numbered chunks)
 
     system_msg = (
-        "You are a Data Structures & Algorithms mentor. "
-        "Answer STRICTLY using the provided CONTEXT chunks. "
-        "If the answer is not in CONTEXT, say you don't know and suggest what to read next. "
-        "When you use a chunk, cite it inline as [1], [2], … matching the chunk numbers. "
-        "Prefer Python snippets ≤ 15 lines. "
-        "Include 3–5 relevant practice problems only if appropriate; avoid inventing titles. "
-        "Never include unrelated or private data.\n\n"
-        "Output format:\n\n"
-        "📘 Topic: <topic>\n\n"
-        "Concept Summary:\n<2–5 sentences grounded in CONTEXT with citations>\n\n"
-        "Example (Python):\n<short snippet>\n\n"
-        "Practice Problems (3–5):\n1. ...\n2. ...\n3. ...\n\n"
-        "Tip:\n<one actionable tip>"
+        "You are a rag agnet .Replay based on information u get ."
     )
 
     messages = [
@@ -109,21 +97,5 @@ def process_query(query: str) -> Dict:
 
     return {"answer": answer}
 
-
-"""     
-if __name__ =='__main__':
-    try:
-        user_query= input("Enter your query")
-    
-        if  not user_query :
-            print("Error: input is required.", file=sys.stderr)
-            sys.exit(2)
-        rc = process_query(user_query)
-        sys.exit(rc)   
-    except Exception as e:
-           print(f"Unhandled error: {e}", file=sys.stderr)
-           sys.exit(1)     
-    
- """
 
 

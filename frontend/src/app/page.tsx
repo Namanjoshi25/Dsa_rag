@@ -8,7 +8,7 @@ export default function Page() {
   return (
     <main>
       <Hero />
-      <Chat />
+      
     </main>
   );
 }

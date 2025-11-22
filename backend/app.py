@@ -1,12 +1,10 @@
-from fastapi import FastAPI,Request,HTTPException
+from fastapi import FastAPI
 import uvicorn
 import os
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
-import asyncio
-from rag import pipeline
-from pydantic import BaseModel,Field
-from routes import auth,user
+
+from routes import auth,user,rag
 load_dotenv()
 
 
@@ -28,29 +26,7 @@ app.add_middleware(
 
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
 app.include_router(user.router,prefix="/api/v1/user" , tags=["User"])
+app.include_router(rag.router,prefix="/api/v1/rag",tags=['Rag'])
 
-class AskRequest(BaseModel):
-    query: str = Field(..., min_length=1, description="User query text")
-
-class AskResponse(BaseModel):
-    answer: str
-    citations: list[dict] = []
-    used_k: int = 0
-
-@app.post("/ask", response_model=AskResponse, summary="Send user query to LLM and vector store")
-async def ask_rag(body: AskRequest):
-    q = body.query.strip()
-    if not q:
-        raise HTTPException(status_code=400, detail="User query is required")
-
-    try:
-        # process_query is sync -> run it in a thread
-        print("Query recieved")
-        result = await asyncio.to_thread(pipeline.process_query, q)
-        print(result)
-        return result.answer  # FastAPI will validate/shape it to AskResponse
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"RAG error: {e}")
- 
 if __name__ == '__main__':
     uvicorn.run(app, host=HOST, port=PORT)

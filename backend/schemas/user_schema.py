@@ -1,4 +1,4 @@
-from pydantic import BaseModel,EmailStr
+from pydantic import BaseModel,EmailStr,Field
 from datetime import datetime
 from typing import Optional
 from uuid import UUID
@@ -19,4 +19,14 @@ class UserResponse(BaseModel):
     created_at:datetime
     class Config:
         from_attributes = True
+        
+class AskRequest(BaseModel):
+    query: str = Field(..., min_length=1, description="User query text")
+    collection_name : str = Field(...,min_length=1,description="Rag collection name")
+    embedding : str = Field(...,min_length=1,description="Embeddings model used")
+
+class AskResponse(BaseModel):
+    answer: str
+    citations: list[dict] = []
+    used_k: int = 0
         
