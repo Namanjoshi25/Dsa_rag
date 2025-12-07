@@ -7,7 +7,7 @@ from enum import Enum
 class StatusEnum(str, Enum):
         PENDING = "pending"
         FAILED = "failed"
-        SUCCESS = "success"
+        READY = "completed"
         PROCESSING ='processing'
 
 class RAGInstance(Base):

@@ -175,10 +175,9 @@ def rag_indexing(rag_id : UUID , db : Session,qdrant_collection:str,id:UUID):
      if not rag:
          raise ValueError("rag not found")
     
-    # Todo do a alembic push to change and add a processing status in the rag databse
-    #rag.status = "processing"
-     #db.commit()
-     #db.refresh(rag) 
+     rag.status = "processing"
+     db.commit()
+     db.refresh(rag) 
      
     # Index PDF
      folder_path = f"uploads/{rag_id}"
@@ -211,6 +210,10 @@ def rag_indexing(rag_id : UUID , db : Session,qdrant_collection:str,id:UUID):
          ids=    upload_ids_to_qdrant(collection_name=qdrant_collection,document_id=document_id,db=db)
          
      logger.info(f"Uploading of the point_ids completed ! {ids}")      
+     
+     rag.status("completed")
+     db.commit()
+     db.refresh(rag)
     
      
      

@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import{ motion} from 'framer-motion'
 import { Card, CardContent } from "@/components/ui/card";
 import axios from "axios";
+import { useAuthContext } from "@/context/AuthContext";
 
 // keep your existing BrandWord, AuthShell, and AuthCard as-is
 const BrandWord = ({ children }: { children: React.ReactNode }) => (
@@ -78,6 +79,7 @@ export default function SignupPage() {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState<string | null>(null);
+  const {setUser} = useAuthContext()
 
 async function handleSignin(e: React.FormEvent<HTMLFormElement>) {
   e.preventDefault();
@@ -107,7 +109,7 @@ async function handleSignin(e: React.FormEvent<HTMLFormElement>) {
 
     console.log("✅ Login successful");
     setSuccess("Login successful! Redirecting…");
-    
+    setUser(res.data)
     // Small delay for user feedback
     setTimeout(() => {
       router.push("/dashboard");

@@ -55,12 +55,10 @@ export default function Dashboard() {
   if (!user) return null;
 
   return (
-    <div className="p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          
-        </div>
+    <div className="p-8 flex flex-col justify-center items-center gap-y-10 ">
+      <h1 className=" text-3xl font-bold">Dashboard</h1>
+        <div className="flex flex-col gap-y-10"> 
+ 
         
        {ragData.map((rag,i)=>(
          <RagCard

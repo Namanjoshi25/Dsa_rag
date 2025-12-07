@@ -59,7 +59,7 @@ def process_query(query: str,collection_name:str,embedding:str) -> Dict:
 )
 
     results = vs.similarity_search(query=query, k=TOP_K)
-
+    print("rag result is this",results)
     if not results:
         return {
             "answer": (
@@ -75,7 +75,7 @@ def process_query(query: str,collection_name:str,embedding:str) -> Dict:
     system_msg = (
         "You are a rag agnet .Replay based on information u get ."
     )
-
+    print("context",context)
     messages = [
         {"role": "system", "content": system_msg},
         {
@@ -86,16 +86,17 @@ def process_query(query: str,collection_name:str,embedding:str) -> Dict:
 
     resp = _chat_with_retry(messages)
     answer = resp.choices[0].message.content.strip()
-
+    print("answer of ai ",answer)
     # Optional: post-check – if no [n] citations appear, downrank/flag
-    if "[" not in answer:
-        answer = (
-            "I don't know based on the provided documents. "
-            "Consider adding more relevant material or refining the query."
-        )
-        return {"answer": answer, "citations": citations, "used_k": len(results)}
+
 
     return {"answer": answer}
 
 
 
+"""     if "[" not in answer:
+        answer = (
+            "I don't know based on the provided documents. "
+            "Consider adding more relevant material or refining the query."
+        )
+        return {"answer": answer, "citations": citations, "used_k": len(results)} """

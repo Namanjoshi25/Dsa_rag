@@ -5,12 +5,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuthStatus } from "@/lib/hooks/useAuthStatus";
 import { logout } from "@/lib/auth";
+import { useAuthContext } from "@/context/AuthContext";
 
 const grad =
   "bg-gradient-to-r from-pink-400 via-rose-400 to-fuchsia-400";
 
 export default function NavBar() {
-  const { user, loading, setUser } = useAuthStatus();
+  const { user, loading, setUser,isAuthenticated } = useAuthContext()
   const router = useRouter();
 
   const onLogout = async () => {

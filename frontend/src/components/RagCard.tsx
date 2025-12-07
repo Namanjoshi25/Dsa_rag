@@ -28,7 +28,7 @@ export default function RagCard({ rag }: RagCardProps) {
       <div className={`${gradBorder} absolute -inset-[1px] rounded-2xl opacity-0 group-hover:opacity-100 blur-md transition duration-500`}></div>
 
       {/* Card */}
-      <div className="relative bg-zinc-900 rounded-2xl border border-zinc-800 px-6 py-5 
+      <div className="relative bg-zinc-900 w-[750px] rounded-2xl border border-zinc-800 px-6 py-5 
         shadow-lg group-hover:shadow-xl transition-all duration-300 hover:-translate-y-1 
         flex flex-col gap-4">
         

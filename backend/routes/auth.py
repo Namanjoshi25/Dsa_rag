@@ -88,3 +88,12 @@ async def get_current_user_info(
 ):
     
     return current_user    
+
+@router.get("/logout",status_code = status.HTTP_200_OK)
+async def logout(response: Response):
+    response.delete_cookie(
+        key="session",  
+        path="/",
+    )
+
+    return {"message": "Logged out"}

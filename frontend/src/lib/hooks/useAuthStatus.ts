@@ -21,5 +21,5 @@ export function useAuthStatus() {
     return () => { cancelled = true; };
   }, []);
 
-  return { user, loading, setUser };
+  return { user, loading, setUser , isAuthenticated:!!user};
 }
