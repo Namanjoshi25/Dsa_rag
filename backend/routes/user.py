@@ -10,6 +10,7 @@ from uuid import UUID
 from typing import Optional,List
 import os
 from rag.indexing import rag_indexing
+from rag.worker.tasks import rag_indexing_task
 router= APIRouter()
 
 # Rag Creation
@@ -92,8 +93,8 @@ async def create_rag(
         
     
     
-    
-    rag_indexing(new_rag.id , db,qdrant_collection,id)
+    rag_indexing_task.delay(new_rag.id,qdrant_collection=qdrant_collection,user_id=id)
+
     return {
         "id": new_rag.id,
         "name": new_rag.name,

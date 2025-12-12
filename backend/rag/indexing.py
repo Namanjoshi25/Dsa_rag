@@ -211,7 +211,7 @@ def rag_indexing(rag_id : UUID , db : Session,qdrant_collection:str,id:UUID):
          
      logger.info(f"Uploading of the point_ids completed ! {ids}")      
      
-     rag.status("completed")
+     rag.status="completed"
      db.commit()
      db.refresh(rag)
     

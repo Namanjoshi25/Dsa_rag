@@ -4,13 +4,21 @@ services:
 
   qdrant:
     image: qdrant/qdrant:latest
-    # no container_name -> auto-scoped by project
     ports:
-      - "6333:6333"        # HTTP; change to "7333:6333" if running both projects
-      - "6334:6334"        # gRPC; change to "7334:6334" likewise
+      - "6333:6333"
+      - "6334:6334"
     volumes:
       - qdrant_storage:/qdrant/storage
     restart: unless-stopped
+
+  valkey:
+    image: valkey/valkey:latest
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+
+
 
 volumes:
   qdrant_storage:
