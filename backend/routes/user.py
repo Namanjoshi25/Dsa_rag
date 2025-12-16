@@ -1,3 +1,4 @@
+import os
 from fastapi import APIRouter,status,Path,Depends,HTTPException,Body,UploadFile,Form,File
 from schemas.rag import RagCreate
 from db.supabase import get_db
@@ -137,3 +138,38 @@ async def get_rag_info(
     except Exception as e:
         print(f'An exception occurred {e}')
         return
+
+
+@router.delete("/delete-rag/{id}",status_code=status.HTTP_201_CREATED)
+def delete_rag(
+    id:UUID=Path(...,title="Rag Id" ,description="RagId"),
+    db:Session=Depends(get_db),
+    user:User = Depends(get_current_user)
+):
+    try:
+        rag = db.query(RAGInstance).filter(RAGInstance.id == id).first()
+        if not rag:
+            raise HTTPException(404,detail="Rag not found")
+        
+        if(rag.user_id != user.id):
+            raise HTTPException(400,detail="Not allowed to delete the rag")
+        
+        documents = db.query(Document).filter(Document.rag_id == rag.id).all()
+        
+        for doc in documents:
+            if doc.file_path and os.path.exists(doc.file_path):
+                try:
+                    os.remove(doc.file_path)
+                    print(f"Delete the doc {doc.file_path}")
+                except:
+                    print(f"Failed to delete the doc {doc.file_path}")    
+        
+        db.query(Document).filter(Document.rag_id == rag.id).delete()
+                    
+        
+      
+    except:
+      print('Something went wrong')
+
+    
+        

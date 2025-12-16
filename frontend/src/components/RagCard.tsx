@@ -1,6 +1,7 @@
 
 import React from "react";
 import Link from 'next/link'
+import { Trash2 } from "lucide-react";
 
 type RagCardProps = {
   rag: {
@@ -21,6 +22,10 @@ type RagCardProps = {
 
 const gradBorder = "bg-gradient-to-r from-pink-500/30 via-rose-500/30 to-fuchsia-500/30";
 
+const handleDelete = ()=>{
+  
+}
+
 export default function RagCard({ rag }: RagCardProps) {
   return (
     <div className="relative group">
@@ -33,9 +38,12 @@ export default function RagCard({ rag }: RagCardProps) {
         flex flex-col gap-4">
         
         {/* Header */}
-        <div>
+        <div className="flex items-center justify-between ">
+          <div>
           <h2 className="text-lg font-semibold text-white">{rag.name}</h2>
           <p className="text-sm text-zinc-400">{rag.description}</p>
+          </div>
+          <Trash2 onClick={handleDelete} className=" hover:text-red-500 transition-all ease-in"/>
         </div>
 
         {/* Status Badge */}

@@ -26,3 +26,5 @@ async def ask_rag(body: AskRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"RAG error: {e}") 
  
+ 
+ 
