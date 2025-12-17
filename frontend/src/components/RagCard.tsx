@@ -3,6 +3,8 @@ import React from "react";
 import Link from 'next/link'
 import { Trash2 } from "lucide-react";
 
+import api from "@/lib/axios";
+
 type RagCardProps = {
   rag: {
     id: string;
@@ -22,9 +24,16 @@ type RagCardProps = {
 
 const gradBorder = "bg-gradient-to-r from-pink-500/30 via-rose-500/30 to-fuchsia-500/30";
 
-const handleDelete = ()=>{
-  
-}
+ const handleDelete = async(ragId: string) => {
+   try {const res = await api.delete(`/api/v1/user/delete-rag/${ragId}`);
+   if (res){
+      window.location.reload();
+   }
+    
+   } catch (error) {
+    console.log("Error while deleting the rag",error);
+   }
+ };
 
 export default function RagCard({ rag }: RagCardProps) {
   return (
@@ -43,7 +52,7 @@ export default function RagCard({ rag }: RagCardProps) {
           <h2 className="text-lg font-semibold text-white">{rag.name}</h2>
           <p className="text-sm text-zinc-400">{rag.description}</p>
           </div>
-          <Trash2 onClick={handleDelete} className=" hover:text-red-500 transition-all ease-in"/>
+          <Trash2 onClick={()=>handleDelete(rag.id)} className=" hover:text-red-500 transition-all ease-in"/>
         </div>
 
         {/* Status Badge */}

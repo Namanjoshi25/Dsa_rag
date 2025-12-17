@@ -7,8 +7,10 @@ from models.user_model import User
 from models.raginstance_model import RAGInstance
 from models.document_model import Document
 from core.deps import get_current_user
+from qdrant_client import QdrantClient
 from uuid import UUID
 from typing import Optional,List
+import shutil
 import os
 from rag.indexing import rag_indexing
 from rag.worker.tasks import rag_indexing_task
@@ -144,7 +146,8 @@ async def get_rag_info(
 def delete_rag(
     id:UUID=Path(...,title="Rag Id" ,description="RagId"),
     db:Session=Depends(get_db),
-    user:User = Depends(get_current_user)
+    user:User = Depends(get_current_user),
+   
 ):
     try:
         rag = db.query(RAGInstance).filter(RAGInstance.id == id).first()
@@ -154,8 +157,12 @@ def delete_rag(
         if(rag.user_id != user.id):
             raise HTTPException(400,detail="Not allowed to delete the rag")
         
-        documents = db.query(Document).filter(Document.rag_id == rag.id).all()
         
+        """
+        Used shutil which recursively delete everthing in the folder and the folder also
+        This one is for  step by step manual type deletion
+                documents = db.query(Document).filter(Document.rag_id == rag.id).all()
+
         for doc in documents:
             if doc.file_path and os.path.exists(doc.file_path):
                 try:
@@ -164,12 +171,59 @@ def delete_rag(
                 except:
                     print(f"Failed to delete the doc {doc.file_path}")    
         
+        # Delete the entire RAG folder after all files are removed
+        rag_folder_path = f"uploads/{str(rag.id)}"
+        if os.path.exists(rag_folder_path):
+            try:
+                shutil.rmtree(rag_folder_path)  # Deletes folder and all contents
+                print(f"Deleted RAG folder: {rag_folder_path}")
+            except Exception as e:
+                print(f"Failed to delete RAG folder {rag_folder_path}: {str(e)}") """
+                
+                
+                       
+
+                
+        rag_folder_path = f"uploads/{str(rag.id)}"
+        if os.path.exists(rag_folder_path):
+            try:
+                shutil.rmtree(rag_folder_path)  # Deletes everything inside
+                print(f"Deleted RAG folder and all contents: {rag_folder_path}")
+            except Exception as e:
+                print(f"Failed to delete RAG folder {rag_folder_path}: {str(e)}")
+
+        
         db.query(Document).filter(Document.rag_id == rag.id).delete()
-                    
+        
+        try:
+            qdrant_client= QdrantClient(
+                url = 'http://localhost:6333'
+            )
+            qdrant_collection = rag.qdrant_collection
+            collections = qdrant_client.get_collections().collections
+            if any(col.name == qdrant_collection for col in collections):
+                qdrant_client.delete_collection(collection_name=qdrant_collection)
+                print(f"Deleted Qdrant collection: {qdrant_collection}")
+        except Exception as e:
+            print(f"Failed to delete the rag with collection {qdrant_collection}")        
+                
+        db.delete(rag)
+        db.commit()
+        return {
+            "message": "RAG instance deleted successfully",
+            "deleted_id": str(id),
+            
+        }        
         
       
-    except:
-      print('Something went wrong')
-
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        print(f'Error deleting RAG: {str(e)}')
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to delete RAG instance: {str(e)}"
+        )
     
         
