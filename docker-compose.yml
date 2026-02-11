@@ -20,11 +20,14 @@ services:
       - "8000:8000"
     env_file:
       - ./backend/.env
+    volumes:
+      - ./backend:/app
     depends_on:
       - qdrant
       - valkey
-    
     restart: unless-stopped
+    # Uncomment below if IPv4 fix still fails (container will use host network like "running without Docker"):
+    # network_mode: host
 
 
   qdrant:

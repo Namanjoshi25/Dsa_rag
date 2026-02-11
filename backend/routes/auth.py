@@ -71,14 +71,16 @@ async def login(
     )
 
     
+    # SameSite=None; Secure required so browser stores cookie when frontend (e.g. :3000) and backend (:8000) are different origins
     response.set_cookie(
-    "session", access_token,
-    httponly=True,
-    samesite="lax",   
-    secure=False,     
-    path="/",
-    max_age=86400,
-)
+        key="session",
+        value=access_token,
+        httponly=True,
+        samesite="none",
+        secure=True,
+        path="/",
+        max_age=86400,
+    )
 
     return {"access_token": access_token, "token_type": "Bearer"}
 
@@ -89,11 +91,12 @@ async def get_current_user_info(
     
     return current_user    
 
-@router.get("/logout",status_code = status.HTTP_200_OK)
+@router.get("/logout", status_code=status.HTTP_200_OK)
 async def logout(response: Response):
     response.delete_cookie(
-        key="session",  
+        key="session",
         path="/",
+        samesite="none",
+        secure=True,
     )
-
     return {"message": "Logged out"}
