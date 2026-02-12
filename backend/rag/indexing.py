@@ -18,12 +18,10 @@ import os
 
 CHUNK_SIZE = 1500
 CHUNK_OVERLAP = 200
-QDRANT_URL = 'http://localhost:6333'
+load_dotenv()
+QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
 
 EMBEDDING_MODEL = 'text-embedding-3-large'
-
-
-load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -43,7 +41,7 @@ def load_and_index_pdf(pdf_path: Path,qdrant_collection:str,document_id:UUID) ->
     if not  os.path.isfile(pdf_path):
         raise FileNotFoundError(f"PDF not found: {pdf_path}")
     
-    pdf_name = pdf_path.split("\\")[-1].split(".")
+    pdf_name = os.path.splitext(os.path.basename(str(pdf_path)))[0]
 
     
     # Load PDF
@@ -100,7 +98,7 @@ def load_and_index_pdf(pdf_path: Path,qdrant_collection:str,document_id:UUID) ->
 def upload_ids_to_qdrant(document_id: UUID, collection_name: str, db: Session):
     try:
         logger.info(f"Retrieving point IDs for document: {document_id}")
-        qdrant_client = QdrantClient(url="http://localhost:6333")
+        qdrant_client = QdrantClient(url=QDRANT_URL)
         point_ids = []
         offset = None
         
@@ -188,15 +186,17 @@ def rag_indexing(rag_id : UUID , db : Session,qdrant_collection:str,id:UUID):
          
          size = os.path.getsize(pdf_path)
          #Saved the document in the document model and get the id of that document for indexing meta data
+         base_name = os.path.basename(pdf_path)
+         name_no_ext, ext = os.path.splitext(base_name)
          new_document = Document(
             rag_id=rag_id,
             user_id= id,
-            filename=  os.path.splitext(pdf_path.split("\\")[-1])[0],
+            filename=name_no_ext,
             file_path=pdf_path,
-            file_type=pdf_path.split("\\")[1].split("."),
+            file_type=[ext.lstrip(".")] if ext else [],
             file_size=size,
             status="pending"
-)
+         )
          db.add(new_document)
          db.commit()
          db.refresh(new_document)

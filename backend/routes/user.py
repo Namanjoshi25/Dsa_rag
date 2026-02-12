@@ -196,8 +196,8 @@ def delete_rag(
         db.query(Document).filter(Document.rag_id == rag.id).delete()
         
         try:
-            qdrant_client= QdrantClient(
-                url = 'http://localhost:6333'
+            qdrant_client = QdrantClient(
+                url=os.getenv("QDRANT_URL", "http://localhost:6333")
             )
             qdrant_collection = rag.qdrant_collection
             collections = qdrant_client.get_collections().collections
