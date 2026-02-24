@@ -18,7 +18,7 @@ export default function Chat({ragData} : {ragData : RagProps}) {
     controllerRef.current = ctrl;
 
     try {
-      const res = await fetch(`${API_BASE}/api/v1/rag/ask`, {
+      const res = await fetch(`${API_BASE}/api/v1/rag/ask/stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: q ,collection_name : ragData.qdrant_collection , embedding : ragData.embedding_model }),
@@ -36,8 +36,11 @@ export default function Chat({ragData} : {ragData : RagProps}) {
 
       while (true) {
         const { value, done } = await reader.read();
-        if (done) break;
-        setAns((prev) => prev + decoder.decode(value));
+        if (done) {
+          setAns((prev) => prev + decoder.decode());
+          break;
+        }
+        setAns((prev) => prev + decoder.decode(value, { stream: true }));
       }
     } catch (e: any) {
       if (e.name !== "AbortError") setAns(`Error: ${e.message ?? e}`);

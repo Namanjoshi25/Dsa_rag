@@ -22,4 +22,4 @@ RUN mkdir -p uploads
 EXPOSE 8000
 
 # Run with hot reload
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["gunicorn", "-k", "uvicorn.workers.UvicornWorker", "app:app", "--bind", "0.0.0.0:8000", "--workers", "4"]

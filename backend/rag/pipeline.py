@@ -47,6 +47,48 @@ def _chat_with_retry(messages, max_retries=3, timeout=60):
             if attempt == max_retries:
                 raise
             time.sleep(min(2 ** attempt, 10))  # exponential backoff
+
+
+def process_query_stream(query: str, collection_name: str, embedding: str):
+    """
+    Same as process_query but streams the LLM response token-by-token.
+    Yields text chunks (str) as they arrive from the API.
+    """
+    emb = OpenAIEmbeddings(model=embedding)
+    vs = QdrantVectorStore.from_existing_collection(
+        collection_name=collection_name,
+        embedding=emb,
+        url=QDRANT_URL,
+        api_key=QDRANT_API_KEY,
+    )
+    results = vs.similarity_search(query=query, k=TOP_K)
+    if not results:
+        fallback = (
+            "I don't know based on the provided documents. "
+            "Try broadening the query or indexing more sources on this topic."
+        )
+        yield fallback
+        return
+    context, citations = _build_context(results)
+    if len(context) > MAX_CONTEXT_CHARS:
+        context = context[:MAX_CONTEXT_CHARS] + "\n\n... [truncated]"
+    system_msg = "You are a rag agent. Reply based on information you get."
+    messages = [
+        {"role": "system", "content": system_msg},
+        {"role": "user", "content": f"CONTEXT (numbered chunks):\n{context}\n\nQUESTION:\n{query}"},
+    ]
+    stream = openai_client.chat.completions.create(
+        model=CHAT_MODEL,
+        temperature=0.2,
+        messages=messages,
+        stream=True,
+        timeout=60,
+    )
+    for chunk in stream:
+        if chunk.choices and chunk.choices[0].delta.content:
+            yield chunk.choices[0].delta.content
+
+
 def process_query(query: str,collection_name:str,embedding:str) -> Dict:
     
     emb = OpenAIEmbeddings(model=embedding)
