@@ -1,13 +1,13 @@
 // src/app/layout.tsx
 import NavBar from "@/components/Navbar";
 import "./globals.css";
-import { Poppins } from "next/font/google";
+import { Outfit } from "next/font/google";
 import { AuthProvider } from "@/context/AuthContext";
 
-const poppins = Poppins({
+const outfit = Outfit({
   subsets: ["latin"],
-  weight: ["300","400","500","600","700"], // pick what you need
-  variable: "--font-poppins",              // expose as CSS variable
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-outfit",
   display: "swap",
 });
 
@@ -19,7 +19,7 @@ export const metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark">
-      <body className={`${poppins.variable} bg-black text-gray-100`}>
+      <body className={`${outfit.variable} min-h-screen bg-[#0a0a0b] text-zinc-100 font-sans antialiased`}>
         <AuthProvider>
         <NavBar/>
         {children}

@@ -12,7 +12,7 @@ import { useAuthContext } from "@/context/AuthContext";
 
 // keep your existing BrandWord, AuthShell, and AuthCard as-is
 const BrandWord = ({ children }: { children: React.ReactNode }) => (
-<span className="bg-gradient-to-r from-pink-400 via-rose-400 to-fuchsia-400 bg-clip-text text-transparent">
+<span className="text-brand">
 {children}
 </span>
 );
@@ -22,14 +22,6 @@ const BrandWord = ({ children }: { children: React.ReactNode }) => (
 export function AuthShell({ children }: { children: React.ReactNode }) {
 return (
 <div className="relative min-h-screen w-full overflow-hidden bg-[#0a0a0b] text-white">
-{/* Ambient gradient blobs */}
-<div className="pointer-events-none absolute -top-48 -left-32 h-[36rem] w-[36rem] rounded-full bg-gradient-to-br from-pink-500/20 via-fuchsia-500/10 to-rose-500/10 blur-3xl" />
-<div className="pointer-events-none absolute bottom-[-18rem] right-[-12rem] h-[36rem] w-[36rem] rounded-full bg-gradient-to-tr from-rose-500/20 via-pink-500/10 to-fuchsia-500/10 blur-3xl" />
-<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_60%_at_50%_-10%,rgba(255,255,255,0.08),rgba(10,10,11,0)),radial-gradient(40%_30%_at_120%_10%,rgba(244,114,182,0.08),rgba(10,10,11,0))]" />
-
-
-
-
 <main className="relative z-10 mx-auto flex max-w-xl items-center justify-center px-6 pb-24 pt-6">
 {children}
 </main>
@@ -54,13 +46,13 @@ return (
 function AuthCard({ children, title, subtitle }: { children: React.ReactNode; title: React.ReactNode; subtitle?: string; }) {
 return (
 <motion.div  initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="w-full">
-<Card className="w-full overflow-hidden rounded-2xl border-zinc-800/60 bg-zinc-900/60 backdrop-blur-xl">
-<CardContent className="p-8">
-<h1 className="mb-2 text-center text-3xl font-extrabold">
+<Card className="w-full overflow-hidden rounded-xl border-zinc-800/60 bg-zinc-900/60 backdrop-blur-xl">
+<CardContent className="p-6">
+<h1 className="mb-1 text-center text-2xl font-extrabold">
 {title}
 </h1>
 {subtitle ? (
-<p className="mb-6 text-center text-sm text-zinc-400">{subtitle}</p>
+<p className="mb-4 text-center text-sm text-zinc-400">{subtitle}</p>
 ) : null}
 {children}
 </CardContent>
@@ -145,14 +137,14 @@ async function handleSignin(e: React.FormEvent<HTMLFormElement>) {
           </div>
         )}
 
-        <form className="space-y-5" onSubmit={handleSignin}>
+        <form className="space-y-4" onSubmit={handleSignin}>
     
 
           <div>
             <Label htmlFor="emailS" className="text-zinc-300">
               Work email
             </Label>
-            <div className="mt-2 flex items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-950/60 px-3 py-2 focus-within:border-rose-500/60">
+            <div className="mt-2 flex items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-950/60 px-3 py-2 focus-within:border-brand/50 focus-within:ring-1 focus-within:ring-brand/20">
               <Mail className="h-4 w-4 text-zinc-500" />
               <Input
                 id="emailS"
@@ -169,7 +161,7 @@ async function handleSignin(e: React.FormEvent<HTMLFormElement>) {
             <Label htmlFor="passwordS" className="text-zinc-300">
               Password
             </Label>
-            <div className="mt-2 flex items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-950/60 px-3 py-2 focus-within:border-rose-500/60">
+            <div className="mt-2 flex items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-950/60 px-3 py-2 focus-within:border-brand/50 focus-within:ring-1 focus-within:ring-brand/20">
               <Lock className="h-4 w-4 text-zinc-500" />
               <Input
                 id="passwordS"
@@ -198,7 +190,7 @@ async function handleSignin(e: React.FormEvent<HTMLFormElement>) {
           <Button
             type="submit"
             disabled={loading}
-            className="group w-full rounded-xl bg-gradient-to-r from-rose-500 to-fuchsia-600 shadow-[0_8px_30px_-12px_rgba(244,63,94,0.6)] transition hover:shadow-[0_12px_34px_-12px_rgba(244,63,94,0.9)] disabled:opacity-60 disabled:cursor-not-allowed"
+            className="group w-full rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground transition hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {loading ? "Logging in...." : "Login account"}
             <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" />

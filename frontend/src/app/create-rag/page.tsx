@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { useForm, Controller } from 'react-hook-form'
-import { file, minLength, z } from 'zod'
+import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -53,11 +53,15 @@ const RagSchema = z
       .int()
       .min(0, "Cannot be negative"),
     is_active: z.boolean(),
-   documents: z
-  .array(z.instanceof(File))
-  .min(1, "File is required")
-  .max(3, "Max 3 files can be uploaded")
-
+    // Use z.any() + refine so we don't reference browser `File` at build time (Node has no File)
+    documents: z
+      .array(z.any())
+      .min(1, "At least one file is required")
+      .max(3, "Max 3 files can be uploaded")
+      .refine(
+        (arr) => typeof File !== "undefined" && arr.every((x) => x instanceof File),
+        { message: "Invalid file(s)" }
+      ),
   })
   .superRefine((data, ctx) => {
     if (data.chunk_overlap >= data.chunk_size) {
@@ -155,8 +159,11 @@ export default function RagForm() {
   
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Loading...</div>
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-700 border-t-brand" />
+          <span className="text-sm text-zinc-400">Loading…</span>
+        </div>
       </div>
     );
   }
@@ -166,16 +173,20 @@ export default function RagForm() {
   }
 
   return (
-    <div className="mx-auto mt-20 max-w-3xl">
-      <form className="space-y-6" onSubmit={handleSubmit(onSubmit)} noValidate>
+    <div className="mx-auto mt-12 max-w-3xl px-4 pb-10">
+      <div className="mb-8">
+        <h1 className="text-xl font-bold tracking-tight text-white sm:text-2xl">Create RAG</h1>
+        <p className="mt-0.5 text-sm text-zinc-400">Configure a new retrieval-augmented collection</p>
+      </div>
+      <form className="space-y-5" onSubmit={handleSubmit(onSubmit)} noValidate>
         {/* Success/Error Messages */}
         {submitSuccess && (
-          <div className="rounded-lg bg-green-50 p-4 text-green-800 border border-green-200">
+          <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/40 p-4 text-emerald-300">
             RAG configuration saved successfully!
           </div>
         )}
         {submitError && (
-          <div className="rounded-lg bg-red-50 p-4 text-red-800 border border-red-200">
+          <div className="rounded-xl border border-red-500/30 bg-red-950/40 p-4 text-red-300">
             {submitError}
           </div>
         )}
@@ -354,7 +365,11 @@ export default function RagForm() {
         </div>
 
         <div className="flex items-center gap-3 pt-2">
-          <Button type="submit" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className="h-8 rounded-lg bg-brand px-3 py-1.5 text-sm font-medium text-brand-foreground hover:opacity-90"
+          >
             {isSubmitting ? 'Saving…' : 'Save RAG Config'}
           </Button>
           <Button type="button" variant="secondary" onClick={() => reset()}>
